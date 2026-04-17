@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import requests
+import os
 
 app = FastAPI()
 
 # ====== CONFIG ======
 LLAMA_API_URL = "http://54.227.171.175:3000/chat"
+
+# API KEY (من البيئة في Render)
+API_KEY = os.getenv("API_KEY", "my-secret-key")
 
 # ====== REQUEST MODEL ======
 class ChatRequest(BaseModel):
@@ -51,16 +55,22 @@ User Question:
 Answer clearly and structured.
 """
 
-# ====== CALL LLAMA ======
+# ====== CALL NODE.JS (LLAMA GATEWAY) ======
 def call_llama(prompt: str):
+    headers = {
+        "x-api-key": API_KEY   # 👈 هنا الحماية الصح
+    }
+
     response = requests.post(
         LLAMA_API_URL,
         json={
             "prompt": prompt,
             "temperature": 0.7,
             "max_tokens": 512
-        }
+        },
+        headers=headers
     )
+
     return response.json()
 
 # ====== API ENDPOINT ======
