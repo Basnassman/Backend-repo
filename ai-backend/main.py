@@ -7,72 +7,73 @@ app = FastAPI()
 # ====== CONFIG ======
 LLAMA_API_URL = "http://54.227.171.175:3000/chat"
 
-# 🔐 API KEY مباشرة داخل الكود
+# 🔐 API KEY (لازم يطابق Node.js)
 API_KEY = "712825736aA$"
 
-# ====== REQUEST MODEL ======
 class ChatRequest(BaseModel):
     message: str
 
-# ====== INTENT DETECTION ======
+
+# ====== INTENT ======
 def detect_intent(text: str):
     text = text.lower()
 
-    if any(word in text for word in ["اشرح", "explain", "what is"]):
-        return "TEACH"
+    if "error" in text or "bug" in text or "خطأ" in text:
+        return "DEBUG"
 
-    if any(word in text for word in ["حل", "solve", "code"]):
+    if "solve" in text or "حل" in text:
         return "SOLVE"
 
-    if any(word in text for word in ["error", "bug", "خطأ"]):
-        return "DEBUG"
+    if "explain" in text or "اشرح" in text:
+        return "TEACH"
 
     return "GENERAL"
 
-# ====== PROMPT ENGINE ======
-def build_prompt(message: str, intent: str):
-    base = """
-You are an expert programming tutor.
-You explain programming clearly and adapt to user level.
-"""
 
-    styles = {
-        "TEACH": "Explain step by step with examples.",
-        "SOLVE": "Give full working solution first then short explanation.",
-        "DEBUG": "Find bug first then explain and fix it.",
-        "GENERAL": "Give balanced clear answer."
+# ====== PROMPT ======
+def build_prompt(message: str, intent: str):
+
+    instruction = {
+        "TEACH": "Explain clearly step by step with simple examples.",
+        "SOLVE": "Give the solution first then short explanation.",
+        "DEBUG": "Find the issue and explain the fix clearly.",
+        "GENERAL": "Answer clearly and simply."
     }
 
     return f"""
-{base}
+You are a helpful programming tutor.
 
-Mode: {styles[intent]}
+Instruction:
+{instruction[intent]}
 
-User Question:
+Question:
 {message}
 
-Answer clearly and structured.
-"""
+Answer only. Do not repeat the question.
+""".strip()
 
-# ====== CALL NODE.JS (LLAMA GATEWAY) ======
+
+# ====== CALL NODE.JS (WITH AUTH) ======
 def call_llama(prompt: str):
+
     headers = {
-        "x-api-key": API_KEY   # 🔐 الآن ثابت داخل الكود
+        "x-api-key": API_KEY   # 🔐 هذا هو المفتاح الصحيح
     }
 
     response = requests.post(
         LLAMA_API_URL,
         json={
             "prompt": prompt,
-            "temperature": 0.7,
-            "max_tokens": 512
+            "temperature": 0.5,
+            "max_tokens": 400
         },
         headers=headers
     )
 
     return response.json()
 
-# ====== API ENDPOINT ======
+
+# ====== API ======
 @app.post("/chat")
 def chat(req: ChatRequest):
 
@@ -81,7 +82,15 @@ def chat(req: ChatRequest):
 
     llama_response = call_llama(prompt)
 
+    # تنظيف الرد بأمان
+    result = (
+        llama_response.get("reply")
+        or llama_response.get("content")
+        or llama_response.get("response")
+        or str(llama_response)
+    )
+
     return {
-    "intent": intent,
-    "response": llama_response.get("reply", llama_response)
-}
+        "intent": intent,
+        "response": result
+    }
