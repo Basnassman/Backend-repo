@@ -6,20 +6,22 @@ app = FastAPI()
 
 LLAMA_API_URL = "http://54.227.171.175:3000/chat"
 
+# 🔐 API KEY (نفس اللي في Node.js لازم يطابقه)
+API_KEY = "712825736aA$"
 
-# ====== يقبل أي شكل من Flutter بدون كسر ======
+
+# ====== REQUEST MODEL ======
 class ChatRequest(BaseModel):
     message: str | None = None
     prompt: str | None = None
     n_predict: int | None = 100
 
 
-# ====== اختيار النص الصحيح بدون كسر التطبيق ======
 def extract_message(req: ChatRequest):
     return req.message or req.prompt or ""
 
 
-# ====== INTENT (خفيف بدون تعقيد) ======
+# ====== INTENT ======
 def detect_intent(text: str):
     text = text.lower()
 
@@ -58,8 +60,12 @@ Answer only. Do not repeat the question.
 """.strip()
 
 
-# ====== CALL LLAMA ======
+# ====== CALL NODE (WITH AUTH) ======
 def call_llama(prompt: str, n_predict: int):
+
+    headers = {
+        "x-api-key": API_KEY  # 🔐 هذا هو المهم
+    }
 
     response = requests.post(
         LLAMA_API_URL,
@@ -67,7 +73,8 @@ def call_llama(prompt: str, n_predict: int):
             "prompt": prompt,
             "n_predict": n_predict,
             "temperature": 0.5
-        }
+        },
+        headers=headers
     )
 
     return response.json()
@@ -84,7 +91,6 @@ def chat(req: ChatRequest):
 
     llama_response = call_llama(prompt, req.n_predict or 100)
 
-    # يدعم كل أشكال الرد بدون كسر التطبيق
     result = (
         llama_response.get("reply")
         or llama_response.get("content")
@@ -94,5 +100,5 @@ def chat(req: ChatRequest):
 
     return {
         "intent": intent,
-        "reply": result   # 🔴 مهم: متوافق مع Flutter عندك
+        "reply": result
     }
