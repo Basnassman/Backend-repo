@@ -76,7 +76,7 @@ def call_llama(prompt: str, n_predict: int):
             json={
                 "prompt": prompt,
                 "n_predict": n_predict,
-                "temperature": 0.3
+                "temperature": 0.2,
             },
             headers={
                 "x-api-key": API_KEY
@@ -84,11 +84,17 @@ def call_llama(prompt: str, n_predict: int):
             timeout=30
         )
 
-        response.raise_for_status()
-        return response.json()
+        print("STATUS:", response.status_code)
+        print("RAW:", response.text)
+
+        # 🔥 حماية كاملة من الكراش
+        try:
+            return response.json()
+        except:
+            return {"reply": response.text}
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"reply": f"LLAMA CALL ERROR: {str(e)}"}
 
 
 def clean_output(text: str):
