@@ -24,37 +24,57 @@ def detect_intent(text: str):
 
 def build_prompt(message: str, intent: str):
 
-    return f"""You are an expert programming tutor.
+    base = "You are a helpful AI assistant."
 
-RULES:
-- Do NOT repeat the user message
-- Do NOT write "User:" or "Assistant:"
-- Do NOT ask questions back unless necessary
-- Give direct answer only
+    if intent == "DEBUG":
+        base = "You are a senior software engineer. Focus on debugging only."
 
-TASK:
+    elif intent == "SOLVE":
+        base = "You solve programming problems step-by-step."
+
+    elif intent == "TEACH":
+        base = "You are a teacher. Explain simply with examples."
+
+    history = get_history()
+
+    history_text = "\n".join([
+        f"{m['role']}: {m['text']}" for m in history[-6:]
+    ])
+
+    return f"""
+{base}
+
+History:
+{history_text}
+
+User:
 {message}
 
-ANSWER:
+Answer:
 """
 
 
 def call_llama(prompt: str, n_predict: int):
 
-    response = requests.post(
-        LLAMA_API_URL,
-        json={
-            "prompt": prompt,
-            "n_predict": n_predict,
-            "temperature": 0.2,
-            
-        },
-        headers={
-            "x-api-key": API_KEY
-        }
-    )
+    try:
+        response = requests.post(
+            LLAMA_API_URL,
+            json={
+                "prompt": prompt,
+                "n_predict": n_predict,
+                "temperature": 0.3
+            },
+            headers={
+                "x-api-key": API_KEY
+            },
+            timeout=30
+        )
 
-    return response.json()
+        response.raise_for_status()
+        return response.json()
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def clean_output(text: str):
