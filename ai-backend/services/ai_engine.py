@@ -10,13 +10,17 @@ API_KEY = "712825736aA$"
 def detect_intent(text: str):
     text = text.lower()
 
-    if "error" in text or "bug" in text or "خطأ" in text:
+    debug_keywords = ["error", "bug", "exception", "fail", "خطأ", "مشكلة"]
+    solve_keywords = ["solve", "fix", "حل", "code", "implement"]
+    teach_keywords = ["explain", "what is", "كيف", "اشرح", "learn"]
+
+    if any(k in text for k in debug_keywords):
         return "DEBUG"
 
-    if "solve" in text or "حل" in text:
+    if any(k in text for k in solve_keywords):
         return "SOLVE"
 
-    if "explain" in text or "اشرح" in text:
+    if any(k in text for k in teach_keywords):
         return "TEACH"
 
     return "GENERAL"
@@ -113,6 +117,7 @@ def generate_response(message: str, n_predict: int = 100):
     add_message("user", message)
 
     intent = detect_intent(message)
+    print("INTENT:", intent)
     prompt = build_prompt(message, intent)
 
     llama_response = call_llama(prompt, n_predict)
