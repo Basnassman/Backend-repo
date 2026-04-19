@@ -70,7 +70,7 @@ Conversation:
 User message:
 {message}
 
-Response (final answer only):
+Response
 """
 
     return prompt.strip()
@@ -84,7 +84,9 @@ def call_llama(prompt: str, n_predict: int):
             json={
                 "prompt": prompt,
                 "n_predict": n_predict,
+               
                 "temperature": 0.2,
+                "stop": ["User:", "Assistant:", "\n\n\n"]
             },
             headers={
                 "x-api-key": API_KEY
@@ -109,10 +111,26 @@ def clean_output(text: str):
     if not text:
         return ""
 
-    for token in ["Question:", "Answer:", "<|assistant|>"]:
-        text = text.replace(token, "")
+    # حذف أي تعليمات أو system leaks
+    forbidden = [
+        "User:",
+        "Assistant:",
+        "Please go ahead",
+        "The user has started",
+        "You are responding"
+    ]
 
-    return text.strip()
+    for f in forbidden:
+        text = text.replace(f, "")
+
+    # منع التكرار الغبي (python python python)
+    lines = text.strip().split()
+    unique = []
+    for word in lines:
+        if not unique or word != unique[-1]:
+            unique.append(word)
+
+    return " ".join(unique).strip()
 
 
 # 🔥 الدالة الرئيسية (العقل)
