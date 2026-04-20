@@ -1,6 +1,6 @@
-from app.core.prompt_engine import build_prompt
-from app.core.model_router import call_model
-from app.services.memory_service import add_message, get_history
+from core.prompt_engine import build_prompt
+from core.model_router import call_model
+from services.memory_service import add_message, get_history
 
 
 def handle_chat(req):

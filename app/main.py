@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes.chat import router as chat_router
+from api.routes.chat import router as chat_router
 
 app = FastAPI(
     title="AI Chat Backend",

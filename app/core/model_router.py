@@ -1,5 +1,5 @@
-from app.core.config import LLAMA_API_URL, API_KEY
-from app.services.llm_client import call_llm
+from core.config import LLAMA_API_URL, API_KEY
+from services.llm_client import call_llm
 
 
 def call_model(prompt: str, n_predict: int):
