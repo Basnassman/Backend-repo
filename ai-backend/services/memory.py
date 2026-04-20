@@ -1,22 +1,21 @@
-# services/memory.py
+from collections import defaultdict
 
-# ذاكرة مؤقتة (لكل مستخدم لاحقًا)
-chat_history = []
+chat_history = defaultdict(list)
 
-def add_message(role: str, content: str):
-    chat_history.append({
+def add_message(user_id: str, role: str, content: str):
+    chat_history[user_id].append({
         "role": role,
         "content": content
     })
 
-    # نحافظ على آخر 5 رسائل فقط
-    if len(chat_history) > 5:
-        chat_history.pop(0)
+    # keep last 10 messages per user
+    if len(chat_history[user_id]) > 10:
+        chat_history[user_id] = chat_history[user_id][-10:]
 
 
-def get_history():
-    return chat_history
+def get_history(user_id: str):
+    return chat_history[user_id]
 
 
-def clear_history():
-    chat_history.clear()
+def clear_history(user_id: str):
+    chat_history[user_id] = []
