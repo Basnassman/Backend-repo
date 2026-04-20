@@ -1,0 +1,2 @@
+LLAMA_API_URL = "http://54.227.171.175:3000/chat"
+API_KEY = "712825736aA$"
