@@ -1,34 +1,94 @@
 import requests
+import time
 from core.config import LLAMA_API_URL, API_KEY
 
 
-def call_llm(prompt: str, n_predict: int):
+# =========================
+# SAFE RESPONSE PARSER
+# =========================
+def _parse_response(data):
+    if not isinstance(data, dict):
+        return str(data)
 
-    try:
-        response = requests.post(
-            LLAMA_API_URL,
-            json={
-                "prompt": prompt,
-                "n_predict": n_predict,
-                "temperature": 0.3,
-                "stop": ["USER:", "ASSISTANT:"]
-            },
-            headers={
-                "x-api-key": API_KEY
-            },
-            timeout=30
-        )
+    return (
+        data.get("reply")
+        or data.get("response")
+        or data.get("content")
+        or str(data)
+    )
 
-        data = response.json()
 
-        return {
-            "reply": (
-                data.get("reply")
-                or data.get("response")
-                or data.get("content")
-                or str(data)
+# =========================
+# CORE LLM CALL
+# =========================
+def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
+    """
+    Production-grade LLM client with:
+    - retry mechanism
+    - safe parsing
+    - status validation
+    - fallback handling
+    """
+
+    payload = {
+        "prompt": prompt,
+        "n_predict": n_predict,
+        "temperature": 0.3,
+        "stop": [
+            "USER:",
+            "ASSISTANT:",
+            "<SYSTEM>",
+            "</SYSTEM>"
+        ]
+    }
+
+    headers = {
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json"
+    }
+
+    last_error = None
+
+    for attempt in range(retries + 1):
+        try:
+            response = requests.post(
+                LLAMA_API_URL,
+                json=payload,
+                headers=headers,
+                timeout=30
             )
-        }
 
-    except Exception as e:
-        return {"reply": f"LLM ERROR: {str(e)}"}
+            # =========================
+            # HTTP VALIDATION
+            # =========================
+            if response.status_code != 200:
+                raise Exception(f"HTTP {response.status_code}: {response.text}")
+
+            # =========================
+            # SAFE JSON PARSING
+            # =========================
+            try:
+                data = response.json()
+            except Exception:
+                return {
+                    "reply": response.text.strip() or "Invalid response format"
+                }
+
+            reply = _parse_response(data).strip()
+
+            return {
+                "reply": reply
+            }
+
+        except Exception as e:
+            last_error = str(e)
+
+            # small backoff (production pattern)
+            time.sleep(0.5 * (attempt + 1))
+
+    # =========================
+    # FINAL FALLBACK (FAIL SAFE)
+    # =========================
+    return {
+        "reply": f"Service unavailable. Last error: {last_error}"
+    }
