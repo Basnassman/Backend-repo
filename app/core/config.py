@@ -27,7 +27,7 @@ class Config:
     )
 
     API_KEY: str = _get_env(
-        "712825736aA$",
+        "API_KEY",
         required=True  # 🔥 must exist in production
     )
 
