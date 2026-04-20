@@ -1,6 +1,6 @@
 import requests
 import time
-from core.config import LLAMA_API_URL, API_KEY
+from core.config import config
 
 
 # =========================
@@ -26,7 +26,7 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
     Production-grade LLM client with:
     - retry mechanism
     - safe parsing
-    - status validation
+    - HTTP validation
     - fallback handling
     """
 
@@ -43,7 +43,7 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
     }
 
     headers = {
-        "x-api-key": API_KEY,
+        "x-api-key": config.API_KEY,
         "Content-Type": "application/json"
     }
 
@@ -52,7 +52,7 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
     for attempt in range(retries + 1):
         try:
             response = requests.post(
-                LLAMA_API_URL,
+                config.LLAMA_API_URL,
                 json=payload,
                 headers=headers,
                 timeout=30
@@ -74,20 +74,16 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
                     "reply": response.text.strip() or "Invalid response format"
                 }
 
-            reply = _parse_response(data).strip()
-
             return {
-                "reply": reply
+                "reply": _parse_response(data).strip()
             }
 
         except Exception as e:
             last_error = str(e)
-
-            # small backoff (production pattern)
             time.sleep(0.5 * (attempt + 1))
 
     # =========================
-    # FINAL FALLBACK (FAIL SAFE)
+    # FINAL FAILSAFE
     # =========================
     return {
         "reply": f"Service unavailable. Last error: {last_error}"

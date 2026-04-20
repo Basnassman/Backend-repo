@@ -1,4 +1,4 @@
-from core.config import LLAMA_API_URL
+from core.config import config
 from services.llm_client import call_llm
 
 
