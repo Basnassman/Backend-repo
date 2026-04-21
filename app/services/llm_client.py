@@ -14,21 +14,17 @@ def _parse_response(data):
         data.get("reply")
         or data.get("response")
         or data.get("content")
-        or data.get("text")   # 🔥 مهم جدًا
+        or data.get("text")
     )
 
 
 # =========================
 # CORE LLM CALL
 # =========================
-def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
-    """
-    Production-grade LLM client with:
-    - retry mechanism
-    - safe parsing
-    - HTTP validation
-    - fallback handling
-    """
+def call_llm(prompt: str, n_predict: int = 100, retries: int = 2, api_url=None, api_key=None):
+
+    url = api_url or config.LLAMA_API_URL
+    key = api_key or config.API_KEY
 
     payload = {
         "prompt": prompt,
@@ -43,7 +39,7 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
     }
 
     headers = {
-        "x-api-key": config.API_KEY,
+        "x-api-key": key,
         "Content-Type": "application/json"
     }
 
@@ -52,21 +48,15 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
     for attempt in range(retries + 1):
         try:
             response = requests.post(
-                config.LLAMA_API_URL,
+                url,
                 json=payload,
                 headers=headers,
                 timeout=30
             )
 
-            # =========================
-            # HTTP VALIDATION
-            # =========================
             if response.status_code != 200:
                 raise Exception(f"HTTP {response.status_code}: {response.text}")
 
-            # =========================
-            # SAFE JSON PARSING
-            # =========================
             try:
                 data = response.json()
             except Exception:
@@ -74,17 +64,16 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2):
                     "reply": response.text.strip() or "Invalid response format"
                 }
 
+            raw = _parse_response(data)
+
             return {
-                "reply": _parse_response(data).strip()
+                "reply": (raw or "").strip()
             }
 
         except Exception as e:
             last_error = str(e)
             time.sleep(0.5 * (attempt + 1))
 
-    # =========================
-    # FINAL FAILSAFE
-    # =========================
     return {
         "reply": f"Service unavailable. Last error: {last_error}"
     }

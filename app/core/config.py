@@ -15,7 +15,7 @@ def _get_env(key: str, default: str = None, required: bool = False):
 
 
 # =========================
-# CONFIG CLASS (CENTRAL SOURCE OF TRUTH)
+# CONFIG CLASS
 # =========================
 @dataclass(frozen=True)
 class Config:
@@ -23,16 +23,16 @@ class Config:
     # -------- LLM SETTINGS --------
     LLAMA_API_URL: str = _get_env(
         "LLAMA_API_URL",
-        "http://54.227.171.175:3000/chat"
+        "http://54.227.171.175:8080/completion"  # ✅ الرابط الصحيح
     )
 
     API_KEY: str = _get_env(
         "API_KEY",
-        required=True  # 🔥 must exist in production
+        "712825736aA$"  # ⚠️ fallback (لكن الأفضل من Render env)
     )
 
     # -------- APP SETTINGS --------
-    APP_ENV: str = _get_env("APP_ENV", "development")  # development / production
+    APP_ENV: str = _get_env("APP_ENV", "development")
     DEBUG: bool = _get_env("DEBUG", "true").lower() == "true"
 
     # -------- MEMORY SETTINGS --------
@@ -48,6 +48,6 @@ class Config:
 
 
 # =========================
-# SINGLETON INSTANCE
+# SINGLETON
 # =========================
 config = Config()
