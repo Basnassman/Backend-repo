@@ -8,13 +8,13 @@ from core.config import config
 # =========================
 def _parse_response(data):
     if not isinstance(data, dict):
-        return str(data)
+        return None
 
     return (
         data.get("reply")
         or data.get("response")
         or data.get("content")
-        or str(data)
+        or data.get("text")   # 🔥 مهم جدًا
     )
 
 

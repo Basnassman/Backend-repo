@@ -38,7 +38,7 @@ def handle_chat(req):
         prompt = build_prompt(message, history)
 
         # =========================
-        # 4. CALL MODEL LAYER
+        # 4. CALL MODEL
         # =========================
         raw_response = call_model(prompt, req.n_predict or 100)
 
@@ -49,25 +49,32 @@ def handle_chat(req):
             reply = (
                 raw_response.get("reply")
                 or raw_response.get("response")
-                or str(raw_response)
+                or raw_response.get("content")
+                or raw_response.get("text")
             )
         else:
             reply = str(raw_response)
 
+        # =========================
+        # 6. CLEAN + FALLBACK
+        # =========================
         reply = (reply or "").strip()
 
+        if not reply:
+            reply = "I couldn't generate a response. Please try again."
+
         # =========================
-        # 6. STORE ASSISTANT MESSAGE
+        # 7. STORE ASSISTANT MESSAGE
         # =========================
         add_message(user_id, "assistant", reply)
 
         # =========================
-        # 7. PERFORMANCE TRACKING
+        # 8. PERFORMANCE
         # =========================
         latency = round(time.time() - start_time, 4)
 
         # =========================
-        # 8. FINAL RESPONSE (CLEAN CONTRACT)
+        # 9. FINAL RESPONSE
         # =========================
         return {
             "reply": reply,
@@ -75,10 +82,7 @@ def handle_chat(req):
             "latency": latency
         }
 
-    except Exception as e:
-        # =========================
-        # GLOBAL ERROR HANDLER
-        # =========================
+    except Exception:
         print("[CHAT SERVICE ERROR]")
         print(traceback.format_exc())
 
