@@ -5,9 +5,6 @@ import time
 import traceback
 
 
-# =========================
-# CORE CHAT HANDLER
-# =========================
 def handle_chat(req):
     start_time = time.time()
 
@@ -22,29 +19,19 @@ def handle_chat(req):
         }
 
     try:
-        # =========================
-        # 1. STORE USER MESSAGE
-        # =========================
+        # 1. store user message
         add_message(user_id, "user", message)
 
-        # =========================
-        # 2. LOAD HISTORY
-        # =========================
+        # 2. load history
         history = get_history(user_id) or []
 
-        # =========================
-        # 3. BUILD PROMPT
-        # =========================
+        # 3. build prompt
         prompt = build_prompt(message, history)
 
-        # =========================
-        # 4. CALL MODEL
-        # =========================
+        # 4. call model
         raw_response = call_model(prompt, req.n_predict or 100)
 
-        # =========================
-        # 5. SAFE RESPONSE PARSING
-        # =========================
+        # 5. safe parsing
         if isinstance(raw_response, dict):
             reply = (
                 raw_response.get("reply")
@@ -55,27 +42,17 @@ def handle_chat(req):
         else:
             reply = str(raw_response)
 
-        # =========================
-        # 6. CLEAN + FALLBACK
-        # =========================
         reply = (reply or "").strip()
 
         if not reply:
             reply = "I couldn't generate a response. Please try again."
 
-        # =========================
-        # 7. STORE ASSISTANT MESSAGE
-        # =========================
+        # 6. store assistant reply
         add_message(user_id, "assistant", reply)
 
-        # =========================
-        # 8. PERFORMANCE
-        # =========================
+        # 7. latency
         latency = round(time.time() - start_time, 4)
 
-        # =========================
-        # 9. FINAL RESPONSE
-        # =========================
         return {
             "reply": reply,
             "intent": "GENERAL",
@@ -83,7 +60,6 @@ def handle_chat(req):
         }
 
     except Exception:
-        print("[CHAT SERVICE ERROR]")
         print(traceback.format_exc())
 
         return {
