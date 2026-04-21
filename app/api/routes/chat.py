@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from api.schemas.chat_schema import ChatRequest
-from services.chat_service import handle_chat
+from app.services.chat_service import handle_chat
 import time
 
 router = APIRouter()

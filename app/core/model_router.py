@@ -1,5 +1,5 @@
-from core.config import config
-from services.llm_client import call_llm
+from app.core.config import config
+from app.services.llm_client import call_llm
 
 
 # =========================
