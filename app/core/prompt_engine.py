@@ -28,19 +28,24 @@ def _normalize_history(history: List[Dict], limit: int = 6) -> str:
 # =========================
 # 2. PROMPT GUARD (CORE RULES)
 # =========================
-SYSTEM_PROMPT = (
-    "You are a controlled AI execution engine.\n"
-    "You are NOT a chatbot.\n\n"
-    "HARD RULES:\n"
-    "- Output ONLY final answer\n"
-    "- No explanations\n"
-    "- No repetition\n"
-    "- No meta text (no Note, no Correct response)\n"
-    "- No role labels in output\n"
-    "- If input is greeting → respond with minimal greeting only\n"
-    "- If input is code request → output only code\n"
-    "- Always stay deterministic and minimal\n"
-)
+SYSTEM_RULES = """
+You are a strict AI response engine.
+
+RULES:
+- You MUST respond ONLY in valid JSON
+- No text outside JSON
+- No markdown
+- No explanation
+- No code blocks
+- No notes
+- No <CONTEXT> or system text
+
+FORMAT:
+{
+  "reply": "string"
+}
+"""
+    
 
 
 # =========================
@@ -77,7 +82,7 @@ def build_prompt(message: str, history: List[Dict]) -> str:
 
     prompt = f"""
 <SYSTEM>
-{SYSTEM_PROMPT}
+{SYSTEM_RULES}
 {mode_rules.get(mode)}
 </SYSTEM>
 

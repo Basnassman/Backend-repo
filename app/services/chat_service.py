@@ -2,6 +2,7 @@ from app.core.prompt_engine import build_prompt
 from app.core.model_router import call_model
 from app.services.memory_service import add_message, get_history
 from app.core.response_sanitizer import clean_output
+from app.core.llm_guard import safe_call_llm
 import time
 import traceback
 
@@ -14,10 +15,10 @@ def handle_chat(req):
 
     if not message:
         return {
-    "reply": reply,
-    "intent": "GENERAL",
-    "latency": latency
-}
+            "reply": "Empty message not allowed",
+            "intent": "ERROR",
+            "latency": 0
+        }
 
     try:
         # 1. store user message
@@ -29,22 +30,14 @@ def handle_chat(req):
         # 3. build prompt
         prompt = build_prompt(message, history)
 
-        # 4. call model
-        raw_response = call_model(prompt, req.n_predict or 100)
+        # 4. model call wrapped in safe layer
+        def call():
+            return call_model(prompt, req.n_predict or 100).get("reply")
 
-        # 5. safe parsing
-        if isinstance(raw_response, dict):
-            reply = (
-                raw_response.get("reply")
-                or raw_response.get("response")
-                or raw_response.get("content")
-                or raw_response.get("text")
-            )
-        else:
-            reply = str(raw_response)
+        reply = safe_call_llm(call)
 
+        # 5. cleanup
         reply = (reply or "").strip()
-
         reply = clean_output(reply)
 
         if not reply:
@@ -65,8 +58,10 @@ def handle_chat(req):
     except Exception:
         print(traceback.format_exc())
 
+        latency = round(time.time() - start_time, 4)
+
         return {
             "reply": "Internal error occurred",
             "intent": "ERROR",
-            "latency": round(time.time() - start_time, 4)
+            "latency": latency
         }
