@@ -51,19 +51,16 @@ def _validate_request(model: str, n_predict: int):
 # 4. MAIN ROUTER (PUBLIC API)
 # =========================
 def call_model(prompt: str, n_predict: int = 100):
-    """
-    Production-style model gateway
-    """
+    print("[CALL MODEL] START")
 
-    # 1. select model
     model = _select_model(prompt)
-
-    # 2. validate request
     n_predict = _validate_request(model, n_predict)
 
-    # 3. route to LLM client
     if model == "llama":
-        return call_llm(prompt, n_predict)
+        response = call_llm(prompt, n_predict)
+        print("[CALL MODEL] RESPONSE:", response)
+        return response
 
-    # fallback (future models)
-    return call_llm(prompt, n_predict)
+    response = call_llm(prompt, n_predict)
+    print("[CALL MODEL] RESPONSE:", response)
+    return response
