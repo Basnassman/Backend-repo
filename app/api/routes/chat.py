@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 # =========================
-# SIMPLE REQUEST LOGGING 
+# SIMPLE REQUEST LOGGING  
 # =========================
 def _log_request(req: ChatRequest):
     print(f"[CHAT REQUEST] message={req.message}")
