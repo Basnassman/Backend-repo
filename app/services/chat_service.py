@@ -1,6 +1,7 @@
 from app.core.prompt_engine import build_prompt
 from app.core.model_router import call_model
 from app.services.memory_service import add_message, get_history
+from app.core.response_sanitizer import clean_output
 import time
 import traceback
 
@@ -13,10 +14,10 @@ def handle_chat(req):
 
     if not message:
         return {
-            "reply": "Empty message not allowed",
-            "intent": "ERROR",
-            "latency": 0
-        }
+    "reply": reply,
+    "intent": "GENERAL",
+    "latency": latency
+}
 
     try:
         # 1. store user message
@@ -43,6 +44,8 @@ def handle_chat(req):
             reply = str(raw_response)
 
         reply = (reply or "").strip()
+
+        reply = clean_output(reply)
 
         if not reply:
             reply = "I couldn't generate a response. Please try again."
