@@ -5,9 +5,14 @@ def safe_call_llm(call_fn, max_retries=2):
     for _ in range(max_retries):
         raw = call_fn()
 
+        if isinstance(raw, dict):
+            raw = raw.get("reply")
+
         print("RAW OUTPUT:", raw)
 
-        if raw and isinstance(raw, str) and raw.strip():
-            return raw.strip()
+        reply = parse_llm_response(raw)
+
+        if reply:
+            return reply
 
     return "I couldn't generate a response."
