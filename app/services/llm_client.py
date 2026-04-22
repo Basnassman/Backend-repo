@@ -51,7 +51,7 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2, api_url=None, 
                 url,
                 json=payload,
                 headers=headers,
-                timeout=30
+                timeout=10
             )
 
             if response.status_code != 200:
@@ -75,5 +75,6 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2, api_url=None, 
             time.sleep(0.5 * (attempt + 1))
 
     return {
-        "reply": f"Service unavailable. Last error: {last_error}"
-    }
+    "reply": f"LLM timeout - check server | error: {last_error}"
+}
+    
