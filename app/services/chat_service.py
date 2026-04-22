@@ -50,7 +50,7 @@ def handle_chat(req):
          reply = extract_reply(reply)
 
         if not reply:
-         reply = "I couldn't generate a response."
+         reply = "Sorry, I couldn't generate a response."
 
     except Exception as e:
         print("[SAFE_CALL ERROR]", e)

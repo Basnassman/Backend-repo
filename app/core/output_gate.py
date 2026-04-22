@@ -5,10 +5,16 @@ def extract_reply(raw: str):
     if not raw:
         return None
 
-    # 🔥 حذف الكود أولاً
-    cleaned = re.sub(r"```.*?```", "", raw, flags=re.DOTALL)
+    raw = str(raw)
 
-    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    # 🔥 إزالة التعليقات (# ...)
+    raw = re.sub(r"#.*", "", raw)
+
+    # 🔥 إزالة code blocks
+    raw = re.sub(r"```.*?```", "", raw, flags=re.DOTALL)
+
+    # 🔥 استخراج أول JSON فقط
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
     if not match:
         return None
 
