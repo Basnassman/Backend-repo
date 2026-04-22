@@ -33,14 +33,7 @@ def handle_chat(req):
         # 4. model call wrapped in safe layer
         def call():
          result = call_model(prompt, req.n_predict or 100)
-
-        # دعم كل أنواع الردود
-        reply = None
-    
-        reply = safe_call_llm(call)
-    except Exception as e:
-        print("[SAFE_CALL ERROR]", e)
-        reply = None
+         return result  # 🔥 لا تسوي أي .get هنا
 
 
         # 5. cleanup
