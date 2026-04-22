@@ -1,25 +1,22 @@
 import json
 import re
 
-def extract_reply(raw: str):
+def extract_reply(raw):
     if not raw:
         return None
 
     raw = str(raw)
 
-    # 🔥 إزالة التعليقات (# ...)
-    raw = re.sub(r"#.*", "", raw)
+    # 🔥 احذف كل شيء قبل أول {
+    start = raw.find("{")
+    end = raw.rfind("}")
 
-    # 🔥 إزالة code blocks
-    raw = re.sub(r"```.*?```", "", raw, flags=re.DOTALL)
-
-    # 🔥 استخراج أول JSON فقط
-    match = re.search(r"\{.*\}", raw, re.DOTALL)
-    if not match:
+    if start == -1 or end == -1:
         return None
 
+    json_str = raw[start:end+1]
+
     try:
-        data = json.loads(match.group(0))
-        return data.get("reply")
+        return json.loads(json_str).get("reply")
     except:
         return None

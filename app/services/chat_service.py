@@ -1,10 +1,9 @@
 from app.core.prompt_engine import build_prompt
 from app.core.model_router import call_model
 from app.services.memory_service import add_message, get_history
-from app.core.response_sanitizer import clean_output
 from app.core.llm_guard import safe_call_llm
 from app.core.text_cleaner import clean_text
-from app.core.output_gate import extract_reply  # 🔥 ADD THIS
+from app.core.output_gate import extract_reply
 import time
 import traceback
 
@@ -22,61 +21,52 @@ def handle_chat(req):
             "latency": 0
         }
 
-    reply = None
-
     try:
-        # 1. store user message
+        # 1. حفظ رسالة المستخدم
         add_message(user_id, "user", message)
 
-        # 2. load history
+        # 2. جلب التاريخ
         history = get_history(user_id) or []
 
-        # 3. build prompt
+        # 3. بناء prompt
         prompt = build_prompt(message, history)
 
-        # 4. model call wrapped in safe layer
+        # 4. استدعاء النموذج
         def call():
             return call_model(prompt, req.n_predict or 100)
 
-        # 🔥 SAFE CALL
-        
-       
-        reply = safe_call_llm(call)
+        raw_reply = safe_call_llm(call)
 
-        if isinstance(reply, dict):
+        # 5. استخراج الرد الحقيقي
+        reply = extract_reply(raw_reply)
 
-         reply = reply.get("reply")
-
-         reply = extract_reply(reply)
-
+        # 6. fallback
         if not reply:
-         reply = "Sorry, I couldn't generate a response."
+            reply = "I couldn't generate a response."
+        else:
+            reply = str(reply).strip()
+            reply = clean_text(reply)
+
+        # 7. حفظ الرد
+        add_message(user_id, "assistant", reply)
+
+        # 8. latency
+        latency = round(time.time() - start_time, 4)
+
+        return {
+            "reply": reply,
+            "intent": "GENERAL",
+            "latency": latency
+        }
 
     except Exception as e:
-        print("[SAFE_CALL ERROR]", e)
+        print("[CHAT ERROR]", e)
         print(traceback.format_exc())
-        reply = None
 
-    # =========================
-    # 5. FINAL OUTPUT PIPELINE (FIXED)
-    # =========================
-    reply = extract_reply(reply)
+        latency = round(time.time() - start_time, 4)
 
-    if not reply:
-        reply = "I couldn't generate a response."
-    else:
-        reply = str(reply).strip()
-        reply = clean_output(reply)
-        reply = clean_text(reply)
-
-    # 6. store assistant reply
-    add_message(user_id, "assistant", reply)
-
-    # 7. latency
-    latency = round(time.time() - start_time, 4)
-
-    return {
-        "reply": reply,
-        "intent": "GENERAL",
-        "latency": latency
-    }
+        return {
+            "reply": "Internal error occurred",
+            "intent": "ERROR",
+            "latency": latency
+        }
