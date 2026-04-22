@@ -4,6 +4,7 @@ from app.services.memory_service import add_message, get_history
 from app.core.response_sanitizer import clean_output
 from app.core.llm_guard import safe_call_llm
 from app.core.text_cleaner import clean_text
+from app.core.output_gate import extract_reply  # 🔥 ADD THIS
 import time
 import traceback
 
@@ -21,7 +22,7 @@ def handle_chat(req):
             "latency": 0
         }
 
-    reply = None  # 🔥 مهم جدًا لمنع UnboundLocalError
+    reply = None
 
     try:
         # 1. store user message
@@ -37,6 +38,7 @@ def handle_chat(req):
         def call():
             return call_model(prompt, req.n_predict or 100)
 
+        # 🔥 SAFE CALL
         reply = safe_call_llm(call)
 
     except Exception as e:
@@ -44,14 +46,18 @@ def handle_chat(req):
         print(traceback.format_exc())
         reply = None
 
-    # 5. cleanup
+    # =========================
+    # 5. FINAL OUTPUT PIPELINE (FIXED)
+    # =========================
+    reply = extract_reply(reply)
+
     if not reply:
-        reply = "I couldn't generate a response. Please try again."
+        reply = "I couldn't generate a response."
     else:
         reply = str(reply).strip()
         reply = clean_output(reply)
         reply = clean_text(reply)
-        
+
     # 6. store assistant reply
     add_message(user_id, "assistant", reply)
 

@@ -2,9 +2,9 @@ from typing import List, Dict
 
 
 # =========================
-# 1. MEMORY NORMALIZER
+# 1. MEMORY NORMALIZER (cleaner)
 # =========================
-def _normalize_history(history: List[Dict], limit: int = 6) -> str:
+def _normalize_history(history: List[Dict], limit: int = 5) -> str:
     output = []
 
     for msg in history[-limit:]:
@@ -14,35 +14,40 @@ def _normalize_history(history: List[Dict], limit: int = 6) -> str:
         if not content:
             continue
 
+        # 🔥 تبسيط بدون رموز قد تربك النموذج
         if role == "user":
-            output.append(f"[U] {content}")
+            output.append(f"User: {content}")
         elif role == "assistant":
-            output.append(f"[A] {content}")
+            output.append(f"Assistant: {content}")
 
     return "\n".join(output)
 
 
 # =========================
-# 2. STRICT SYSTEM RULES (IMPROVED)
+# 2. STRICT SYSTEM RULES (SIMPLIFIED - IMPORTANT)
 # =========================
 SYSTEM_RULES = """
-You are a STRICT JSON API engine.
+You are a strict API engine.
 
-ABSOLUTE RULES:
-- Output ONLY valid JSON
-- NEVER include <SYSTEM>, <CONTEXT>, <INPUT>, <OUTPUT>
-- NEVER repeat the prompt
-- NEVER include explanations
-- NEVER include markdown or text outside JSON
-- If you fail, output {"reply": ""}
+Return ONLY valid JSON.
 
-HARD FORMAT:
+Rules:
+- Only JSON output allowed
+- No explanations
+- No markdown
+- No SYSTEM / CONTEXT / INPUT tags
+- No extra text before or after JSON
+
+Format:
 {"reply":"string"}
+
+If unsure:
+{"reply":""}
 """.strip()
 
 
 # =========================
-# 3. INTENT FILTER
+# 3. INTENT FILTER (simplified)
 # =========================
 def _detect_mode(message: str) -> str:
     msg = message.lower()
@@ -60,37 +65,23 @@ def _detect_mode(message: str) -> str:
 
 
 # =========================
-# 4. MAIN PROMPT BUILDER
+# 4. MAIN PROMPT BUILDER (SIMPLIFIED + STRONGER)
 # =========================
 def build_prompt(message: str, history: List[Dict]) -> str:
-    mode = _detect_mode(message)
     history_block = _normalize_history(history)
 
-    mode_rules = {
-        "CODE": "Return ONLY code inside JSON.\n",
-        "EXPLAIN": "Be short and factual.\n",
-        "CHAT": "Be natural but very short.\n",
-        "GENERAL": "Be direct and minimal.\n",
-    }
-
     prompt = f"""
-SYSTEM:
 {SYSTEM_RULES}
 
-MODE RULE:
-{mode_rules.get(mode)}
+Conversation:
+{history_block if history_block else "No history"}
 
-IMPORTANT:
-Return ONLY this JSON:
-{{"reply":"..." }}
-
-CONTEXT:
-{history_block if history_block else "EMPTY"}
-
-USER:
+User message:
 {message}
 
-RESPONSE (JSON ONLY):
+IMPORTANT:
+Respond ONLY with JSON:
+{{"reply":"..."}}
 """.strip()
 
     return prompt
