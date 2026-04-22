@@ -23,7 +23,7 @@ class Config:
     # -------- LLM SETTINGS --------
     LLAMA_API_URL: str = _get_env(
         "LLAMA_API_URL",
-        "http://54.227.171.175:8080/completion"  # ✅ الرابط الصحيح
+        "http://127.0.0.1:8080/completion"  # ✅ الرابط الصحيح
     )
 
     API_KEY: str = _get_env(
