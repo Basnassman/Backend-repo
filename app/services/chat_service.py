@@ -3,6 +3,7 @@ from app.core.model_router import call_model
 from app.services.memory_service import add_message, get_history
 from app.core.response_sanitizer import clean_output
 from app.core.llm_guard import safe_call_llm
+from app.core.text_cleaner import clean_text
 import time
 import traceback
 
@@ -49,7 +50,8 @@ def handle_chat(req):
     else:
         reply = str(reply).strip()
         reply = clean_output(reply)
-
+        reply = clean_text(reply)
+        
     # 6. store assistant reply
     add_message(user_id, "assistant", reply)
 

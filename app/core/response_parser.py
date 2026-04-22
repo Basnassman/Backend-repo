@@ -5,15 +5,13 @@ def parse_llm_response(raw: str):
     if not raw:
         return None
 
-    # 🔥 استخراج كل JSONs
-    matches = re.findall(r"\{[^{}]*\}", raw)
+    # 🔥 خذ فقط أول JSON صحيح
+    match = re.search(r"\{.*?\}", raw, re.DOTALL)
+    if not match:
+        return None
 
-    for m in matches:
-        try:
-            data = json.loads(m)
-            if isinstance(data, dict) and "reply" in data:
-                return data["reply"]
-        except:
-            continue
-
-    return None
+    try:
+        data = json.loads(match.group(0))
+        return data.get("reply")
+    except:
+        return None
