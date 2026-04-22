@@ -20,6 +20,8 @@ def handle_chat(req):
             "latency": 0
         }
 
+    reply = None  # 🔥 مهم جدًا لمنع UnboundLocalError
+
     try:
         # 1. store user message
         add_message(user_id, "user", message)
@@ -32,36 +34,30 @@ def handle_chat(req):
 
         # 4. model call wrapped in safe layer
         def call():
-         result = call_model(prompt, req.n_predict or 100)
-         return result  # 🔥 لا تسوي أي .get هنا
+            return call_model(prompt, req.n_predict or 100)
 
+        reply = safe_call_llm(call)
 
-        # 5. cleanup
-        reply = (reply or "").strip()
+    except Exception as e:
+        print("[SAFE_CALL ERROR]", e)
+        print(traceback.format_exc())
+        reply = None
+
+    # 5. cleanup
+    if not reply:
+        reply = "I couldn't generate a response. Please try again."
+    else:
+        reply = str(reply).strip()
         reply = clean_output(reply)
 
-        if not reply:
-            reply = "I couldn't generate a response. Please try again."
+    # 6. store assistant reply
+    add_message(user_id, "assistant", reply)
 
-        # 6. store assistant reply
-        add_message(user_id, "assistant", reply)
+    # 7. latency
+    latency = round(time.time() - start_time, 4)
 
-        # 7. latency
-        latency = round(time.time() - start_time, 4)
-
-        return {
-            "reply": reply,
-            "intent": "GENERAL",
-            "latency": latency
-        }
-
-    except Exception:
-        print(traceback.format_exc())
-
-        latency = round(time.time() - start_time, 4)
-
-        return {
-            "reply": "Internal error occurred",
-            "intent": "ERROR",
-            "latency": latency
-        }
+    return {
+        "reply": reply,
+        "intent": "GENERAL",
+        "latency": latency
+    }
