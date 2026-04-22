@@ -35,12 +35,12 @@ def handle_chat(req):
          result = call_model(prompt, req.n_predict or 100)
 
         # دعم كل أنواع الردود
-         if isinstance(result, dict):
-          return result.get("reply") or result.get("response") or str(result)
-
-         return str(result)
-
-         reply = safe_call_llm(call)
+        reply = None
+    
+        reply = safe_call_llm(call)
+    except Exception as e:
+        print("[SAFE_CALL ERROR]", e)
+        reply = None
 
 
         # 5. cleanup
