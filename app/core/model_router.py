@@ -46,20 +46,17 @@ def call_model(prompt: str, n_predict: int = 100):
     model = _select_model(prompt)
     n_predict = _validate_request(model, n_predict)
 
-    if model == "llama":
-        response = call_llm(
-            prompt=prompt,
-            n_predict=n_predict,
-            api_url=config.LLAMA_API_URL,
-            api_key=config.API_KEY
-        )
-
-        print("[CALL MODEL] RESPONSE:", response)
-        return response
-
-    return call_llm(
+    raw = call_llm(
         prompt=prompt,
         n_predict=n_predict,
         api_url=config.LLAMA_API_URL,
         api_key=config.API_KEY
     )
+
+    print("[CALL MODEL RAW]:", raw)
+
+    # 🔥 هنا التوحيد الحقيقي
+    if isinstance(raw, dict):
+        return raw.get("reply") or raw.get("response") or str(raw)
+
+    return str(raw)
