@@ -32,9 +32,16 @@ def handle_chat(req):
 
         # 4. model call wrapped in safe layer
         def call():
-            return call_model(prompt, req.n_predict or 100).get("reply")
+         result = call_model(prompt, req.n_predict or 100)
 
-        reply = safe_call_llm(call)
+        # دعم كل أنواع الردود
+         if isinstance(result, dict):
+          return result.get("reply") or result.get("response") or str(result)
+
+         return str(result)
+
+         reply = safe_call_llm(call)
+
 
         # 5. cleanup
         reply = (reply or "").strip()
