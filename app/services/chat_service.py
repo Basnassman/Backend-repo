@@ -39,7 +39,18 @@ def handle_chat(req):
             return call_model(prompt, req.n_predict or 100)
 
         # 🔥 SAFE CALL
+        
+       
         reply = safe_call_llm(call)
+
+        if isinstance(reply, dict):
+
+         reply = reply.get("reply")
+
+         reply = extract_reply(reply)
+
+        if not reply:
+         reply = "I couldn't generate a response."
 
     except Exception as e:
         print("[SAFE_CALL ERROR]", e)
