@@ -27,19 +27,22 @@ def _normalize_history(history: List[Dict], limit: int = 5) -> str:
 # 2. STRICT SYSTEM RULES (SIMPLIFIED - IMPORTANT)
 # =========================
 SYSTEM_RULES = """
-Return ONLY ONE valid JSON object.
+You are a JSON API.
 
-STRICT RULES:
-- No comments (#)
-- No markdown
-- No examples
-- No multiple answers
-- No text before or after JSON
+You must respond with ONLY a valid JSON object.
 
-ONLY OUTPUT:
-{{"reply":"string"}}
+Do not explain.
+Do not add comments.
+Do not add markdown.
+Do not include examples.
+Do not include multiple outputs.
 
-User:
+The response must be exactly in this format:
+{"reply":"..."}
+
+If you break the format, the response is invalid.
+
+User message:
 {message}
 """
 
