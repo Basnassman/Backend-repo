@@ -9,12 +9,21 @@ def safe_call_llm(call_fn, max_retries=2):
 
         print("RAW OUTPUT:", raw)
 
-        reply = parse_llm_response(raw)
+        try:
+            reply = parse_llm_response(raw)
+        except Exception as e:
+            print("PARSE ERROR:", e)
+            reply = None
 
+        # fallback آمن
         if reply:
             return reply
+
+        # إذا parser فشل → رجّع raw بدل ما تضيع
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip()
 
         last = raw
         time.sleep(0.3)
 
-    return "Service temporarily unavailable"
+    return "I couldn't process the response."
