@@ -23,56 +23,42 @@ def _normalize_history(history: List[Dict], limit: int = 3) -> str:
 
 
 # =========================
-# 2. STRICT SYSTEM RULES (CLEAN)
+# 2. STRICT SYSTEM RULES (FIXED!)
 # =========================
-SYSTEM_RULES = """
-You are a function-calling assistant.
+SYSTEM_RULES = """You are a helpful AI assistant. You MUST respond with exactly one JSON object in this exact format:
 
-You MUST respond with exactly one JSON object.
+{"tool":"chat_reply","args":{"reply":"YOUR_REPLY_HERE"}}
 
-Allowed tool:
-- chat_reply
-
-FORMAT:
-{
-  "tool": "chat_reply",
-  "args": {
-    "reply": "string"
-  }
-}
-
-Rules:
-- No extra text
-- No explanations
-- No markdown
-- No multiple objects
-- No comments
-"""
+CRITICAL RULES:
+- Replace YOUR_REPLY_HERE with your actual response to the user
+- Do NOT write "string" or any placeholder
+- Do NOT add any text before or after the JSON
+- Do NOT use markdown code blocks
+- Do NOT add comments or explanations
+- Respond in the same language as the user's message
+- Keep replies natural and conversational"""
 
 
 # =========================
 # 3. MAIN PROMPT BUILDER (FIXED)
 # =========================
 def build_prompt(message: str, history: List[Dict]) -> str:
-    # 🔥 مهم: نحد من تأثير history
     history_block = _normalize_history(history)
 
     if history_block:
-        prompt = f"""
-{SYSTEM_RULES}
+        prompt = f"""{SYSTEM_RULES}
 
-Conversation:
+Previous conversation:
 {history_block}
 
-User:
-{message}
-""".strip()
-    else:
-        prompt = f"""
-{SYSTEM_RULES}
+User: {message}
 
-User:
-{message}
-""".strip()
+Your response (JSON only):"""
+    else:
+        prompt = f"""{SYSTEM_RULES}
+
+User: {message}
+
+Your response (JSON only):"""
 
     return prompt
