@@ -17,11 +17,7 @@ MODELS = {
 # 2. ROUTING
 # =========================
 def _select_model(prompt: str) -> str:
-    p = prompt.lower()
-
-    if any(k in p for k in ["code", "python", "flutter", "bug", "error"]):
-        return "llama"
-
+    # حالياً كل شيء يروح لنفس الموديل (بسيط وواضح)
     return "llama"
 
 
@@ -38,7 +34,7 @@ def _validate_request(model: str, n_predict: int):
 
 
 # =========================
-# 4. MAIN CALL
+# 4. MAIN CALL (FIXED)
 # =========================
 def call_model(prompt: str, n_predict: int = 100):
     print("[CALL MODEL] START")
@@ -46,6 +42,7 @@ def call_model(prompt: str, n_predict: int = 100):
     model = _select_model(prompt)
     n_predict = _validate_request(model, n_predict)
 
+    # 🔥 مهم: لا نلمس الرد نهائياً
     raw = call_llm(
         prompt=prompt,
         n_predict=n_predict,
@@ -55,8 +52,5 @@ def call_model(prompt: str, n_predict: int = 100):
 
     print("[CALL MODEL RAW]:", raw)
 
-    # 🔥 هنا التوحيد الحقيقي
-    if isinstance(raw, dict):
-        return raw.get("reply") or raw.get("response") or str(raw)
-
-    return str(raw)
+    # 🔥 نرجع RAW كما هو (بدون تعديل)
+    return raw

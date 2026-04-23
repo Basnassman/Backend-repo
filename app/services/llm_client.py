@@ -4,64 +4,20 @@ from app.core.config import config
 
 
 # =========================
-# SAFE RESPONSE PARSER
-# =========================
-def _parse_response(data):
-    if not isinstance(data, dict):
-        return None
-
-    return (
-        data.get("reply")
-        or data.get("response")
-        or data.get("content")
-        or data.get("text")
-    )
-
-
-# =========================
-# BUILD STRICT PROMPT WRAPPER
-# =========================
-def _wrap_prompt(prompt: str):
-    return f"""
-Return ONLY valid JSON.
-
-FORMAT:
-{{"reply":"string"}}
-
-RULES:
-- No markdown
-- No code
-- No explanations
-- No comments
-- No extra text
-
-USER:
-{prompt}
-
-OUTPUT:
-""".strip()
-
-
-# =========================
-# CORE LLM CALL
+# CORE LLM CALL (CLEAN)
 # =========================
 def call_llm(prompt: str, n_predict: int = 100, retries: int = 2, api_url=None, api_key=None):
 
     url = api_url or config.LLAMA_API_URL
     key = api_key or config.API_KEY
 
-    # 🔥 enforce prompt at client level
-    final_prompt = _wrap_prompt(prompt)
-
     payload = {
-        "prompt": final_prompt,
+        "prompt": prompt,  # 🔥 لا تغلفه
         "n_predict": n_predict,
-        "temperature": 0.2,   # 🔥 أقل = فوضى أقل
+        "temperature": 0.2,
         "stop": [
-            "USER:",
-            "ASSISTANT:",
-            "<SYSTEM>",
-            "</SYSTEM>",
+            "User:",
+            "Assistant:",
             "```"
         ]
     }
@@ -85,21 +41,14 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2, api_url=None, 
             if response.status_code != 200:
                 raise Exception(f"HTTP {response.status_code}: {response.text}")
 
+            # 🔥 نرجع RAW كما هو
             try:
-                data = response.json()
+                return response.json()
             except Exception:
-                return {"reply": response.text.strip()}
-
-            raw = _parse_response(data)
-
-            return {
-                "reply": (raw or "").strip()
-            }
+                return response.text.strip()
 
         except Exception as e:
             last_error = str(e)
             time.sleep(0.5 * (attempt + 1))
 
-    return {
-        "reply": f"LLM timeout | error: {last_error}"
-    }
+    return f"LLM timeout | error: {last_error}"
