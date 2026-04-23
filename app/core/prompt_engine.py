@@ -32,8 +32,13 @@ SMART CONTRACTS:
 - Ethereum → Solidity
 - Others → Ask user
 
-You MUST respond with exactly one JSON object:
+LANGUAGE RULE (CRITICAL):
+- If user writes in Arabic → YOU MUST reply in Arabic only
+- If user writes in English → YOU MUST reply in English only
+- If user writes in mixed → reply in the dominant language
+- NEVER mix languages in the same reply
 
+FORMAT:
 {"tool":"chat_reply","args":{"reply":"WRITE YOUR REAL ANSWER HERE"}}
 
 CRITICAL RULES:
@@ -42,7 +47,6 @@ CRITICAL RULES:
 - No text before/after JSON
 - No markdown code blocks
 - No comments
-- Same language as user
 - Natural and conversational"""
 
 
