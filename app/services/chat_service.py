@@ -2,7 +2,7 @@ from app.core.prompt_engine import build_prompt
 from app.core.model_router import call_model
 from app.services.memory_service import add_message, get_history
 from app.core.llm_guard import safe_call_llm
-from app.core.response_parser import parse_llm_response
+from app.core.response_parser import parse_tool_response
 import time
 import traceback
 
@@ -37,7 +37,7 @@ def handle_chat(req):
         raw_reply = safe_call_llm(call)
 
         # 5. معالجة + استخراج + تنظيف داخل parser
-        reply = parse_llm_response(raw_reply)
+        reply = parse_tool_response(raw_reply)
 
         # 6. fallback
         if not reply:

@@ -26,19 +26,27 @@ def _normalize_history(history: List[Dict], limit: int = 3) -> str:
 # 2. STRICT SYSTEM RULES (CLEAN)
 # =========================
 SYSTEM_RULES = """
-You are a strict JSON API.
+You are a function-calling assistant.
 
-Return ONLY one JSON object.
+You MUST respond with exactly one JSON object.
 
-Do not continue the conversation.
-Do not simulate multiple turns.
-Do not add comments.
-Do not add explanations.
+Allowed tool:
+- chat_reply
 
-Format:
-{"reply":"..."}
+FORMAT:
+{
+  "tool": "chat_reply",
+  "args": {
+    "reply": "string"
+  }
+}
 
-If you add anything else, the output is invalid.
+Rules:
+- No extra text
+- No explanations
+- No markdown
+- No multiple objects
+- No comments
 """
 
 

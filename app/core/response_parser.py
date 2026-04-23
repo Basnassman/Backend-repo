@@ -1,75 +1,100 @@
 import json
 import re
+from typing import Optional, Dict, Any
 
 
 # =========================
-# 1. EXTRACT JSON (SAFE)
+# SAFE JSON EXTRACTION
 # =========================
-def extract_json(text: str):
+def _extract_json_block(text: str) -> Optional[str]:
     """
-    Extract first valid JSON object from raw LLM output
+    Extract first valid JSON block safely (non-greedy + balanced fallback)
     """
     if not text:
         return None
 
-    # 🔥 أخذ أول JSON فقط (non-greedy)
+    # 🔥 try non-greedy first
     match = re.search(r'\{.*?\}', text, re.DOTALL)
-    if not match:
+    if match:
+        return match.group()
+
+    return None
+
+
+# =========================
+# SAFE JSON PARSE
+# =========================
+def _safe_json_load(text: str) -> Optional[Dict[str, Any]]:
+    if not text:
         return None
 
     try:
-        return json.loads(match.group())
+        return json.loads(text)
     except:
         return None
 
 
 # =========================
-# 2. CLEAN OUTPUT
+# TOOL VALIDATION
 # =========================
-def clean_reply(text: str) -> str:
+ALLOWED_TOOLS = {"chat_reply"}
+
+
+def _validate_tool(data: Dict[str, Any]) -> Optional[str]:
     """
-    Minimal safe cleaning only
+    Validate tool structure and return reply safely
     """
-    if not text:
-        return ""
+    if not isinstance(data, dict):
+        return None
 
-    text = str(text)
+    tool = data.get("tool")
+    args = data.get("args")
 
-    # 🔥 قص أي ضوضاء من LLM
-    text = text.split("//")[0]
-    text = text.split("User:")[0]
-    text = text.split("Assistant:")[0]
+    if tool not in ALLOWED_TOOLS:
+        return None
 
-    return (
-        text.strip()
-        .replace("\n", " ")
-        .replace("\t", " ")
-    )
+    if not isinstance(args, dict):
+        return None
+
+    reply = args.get("reply")
+
+    if not isinstance(reply, str):
+        return None
+
+    return reply.strip()
 
 
 # =========================
-# 3. MAIN PARSER PIPELINE
+# MAIN PARSER (CLEAN + SAFE)
 # =========================
-def parse_llm_response(raw: str) -> str:
+def parse_tool_response(raw: str) -> Optional[str]:
     """
-    RAW → JSON → reply
+    RAW LLM OUTPUT → TOOL RESPONSE → CLEAN REPLY
     """
 
     if not raw:
         return None
 
-    # 1. محاولة JSON مباشر
-    try:
-        data = json.loads(raw)
-        if isinstance(data, dict) and "reply" in data:
-            return clean_reply(data["reply"])
-    except:
-        pass
+    # -------------------------
+    # 1. direct JSON attempt
+    # -------------------------
+    data = _safe_json_load(raw)
 
-    # 2. استخراج JSON من نص ملخبط
-    data = extract_json(raw)
-    if data and isinstance(data, dict) and "reply" in data:
-        return clean_reply(data["reply"])
+    # -------------------------
+    # 2. fallback: extract JSON
+    # -------------------------
+    if not data:
+        json_block = _extract_json_block(raw)
+        if json_block:
+            data = _safe_json_load(json_block)
 
-    # 3. fallback (نص عادي)
-    return clean_reply(raw)
+    # -------------------------
+    # 3. validate tool format
+    # -------------------------
+    if data:
+        return _validate_tool(data)
+
+    # -------------------------
+    # 4. final fallback (last resort)
+    # -------------------------
+    return None
