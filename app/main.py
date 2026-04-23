@@ -6,7 +6,7 @@ from app.core.config import config
 
 
 # =========================
-# APP FACTORY STYLE (BEST PRACTICE)
+# APP FACTORY
 # =========================
 def create_app() -> FastAPI:
 
@@ -18,13 +18,13 @@ def create_app() -> FastAPI:
     )
 
     # =========================
-    # MIDDLEWARE LAYER
+    # CORS (SECURE VERSION READY)
     # =========================
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # لاحقاً تقفلها في production
+        allow_origins=["*"] if config.DEBUG else [],  # 🔥 production آمن
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["POST", "GET"],
         allow_headers=["*"],
     )
 
@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(chat_router, prefix="/api")
 
     # =========================
-    # HEALTH CHECK (IMPORTANT FOR DEPLOYMENT)
+    # HEALTH CHECK
     # =========================
     @app.get("/health")
     def health_check():

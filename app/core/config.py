@@ -3,46 +3,54 @@ from dataclasses import dataclass
 
 
 # =========================
-# ENV LOADER HELPERS
+# ENV LOADER
 # =========================
-def _get_env(key: str, default: str = None, required: bool = False):
+def _get_env(key: str, default=None, required: bool = False):
     value = os.getenv(key, default)
 
-    if required and not value:
+    if required and (value is None or value == ""):
         raise EnvironmentError(f"Missing required environment variable: {key}")
 
     return value
 
 
+def _get_bool(key: str, default="false"):
+    return _get_env(key, default).lower() == "true"
+
+
+def _get_int(key: str, default):
+    return int(_get_env(key, str(default)))
+
+
 # =========================
-# CONFIG CLASS
+# CONFIG
 # =========================
 @dataclass(frozen=True)
 class Config:
 
-    # -------- LLM SETTINGS --------
+    # -------- LLM --------
     LLAMA_API_URL: str = _get_env(
         "LLAMA_API_URL",
-        "http://54.227.171.175:3000"  # ✅ الرابط الصحيح
+        "http://54.227.171.175:3000/chat"   # 🔥 endpoint واضح
     )
 
     API_KEY: str = _get_env(
         "API_KEY",
-        "712825736aA$"  # ⚠️ fallback (لكن الأفضل من Render env)
+        required=True   # 🔥 لا fallback (مهم للاستقرار)
     )
 
-    # -------- APP SETTINGS --------
+    # -------- APP --------
     APP_ENV: str = _get_env("APP_ENV", "development")
-    DEBUG: bool = _get_env("DEBUG", "true").lower() == "true"
+    DEBUG: bool = _get_bool("DEBUG", "false")
 
-    # -------- MEMORY SETTINGS --------
-    MAX_MEMORY_MESSAGES: int = int(_get_env("MAX_MEMORY_MESSAGES", "10"))
+    # -------- MEMORY --------
+    MAX_MEMORY_MESSAGES: int = _get_int("MAX_MEMORY_MESSAGES", 5)
 
-    # -------- MODEL SETTINGS --------
-    DEFAULT_N_PREDICT: int = int(_get_env("DEFAULT_N_PREDICT", "100"))
-    MAX_N_PREDICT: int = int(_get_env("MAX_N_PREDICT", "1000"))
+    # -------- MODEL --------
+    DEFAULT_N_PREDICT: int = _get_int("DEFAULT_N_PREDICT", 100)
+    MAX_N_PREDICT: int = _get_int("MAX_N_PREDICT", 500)
 
-    # -------- SECURITY SETTINGS --------
+    # -------- SAFETY FLAGS (حقيقية أو احذفها لاحقًا) --------
     ENABLE_PROMPT_GUARD: bool = True
     ENABLE_RESPONSE_SANITIZER: bool = True
 

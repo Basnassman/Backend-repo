@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 # =========================
-# SIMPLE REQUEST LOGGING  
+# LOGGING
 # =========================
 def _log_request(req: ChatRequest):
     print(f"[CHAT REQUEST] message={req.message}")
@@ -18,23 +18,32 @@ def _log_request(req: ChatRequest):
 # =========================
 @router.post("/chat")
 async def chat(req: ChatRequest, request: Request):
+
     start_time = time.time()
 
-    try:
-        # 1. basic validation guard
-        if not req.message:
-            raise HTTPException(
-                status_code=400,
-                detail="message is required"
-            )
+    # =========================
+    # VALIDATION (CLEANER)
+    # =========================
+    if not req.message or not req.message.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="message is required"
+        )
 
-        # 2. log request (production debugging)
+    try:
+        # =========================
+        # LOG
+        # =========================
         _log_request(req)
 
-        # 3. business logic layer
+        # =========================
+        # BUSINESS LOGIC
+        # =========================
         response = handle_chat(req)
 
-        # 4. performance tracking
+        # =========================
+        # LATENCY
+        # =========================
         duration = round(time.time() - start_time, 4)
 
         return {
@@ -47,7 +56,6 @@ async def chat(req: ChatRequest, request: Request):
         raise he
 
     except Exception as e:
-        # global fallback error (like production APIs)
         print(f"[CHAT ERROR] {str(e)}")
 
         raise HTTPException(

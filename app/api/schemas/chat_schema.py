@@ -13,15 +13,16 @@ class ChatRequest(BaseModel):
         description="User input message"
     )
 
-    user_id: Optional[str] = Field(
+    user_id: str = Field(
         default="default",
         max_length=100
     )
 
-    n_predict: Optional[int] = Field(
+    n_predict: int = Field(
         default=100,
-        ge=1,     # >= 1
-        le=1000   # <= 1000
+        ge=1,
+        le=1000,
+        description="Max tokens to generate"
     )
 
 
@@ -34,12 +35,15 @@ class ChatResponse(BaseModel):
         description="Model generated response"
     )
 
-    intent: Optional[str] = Field(
+    intent: str = Field(
         default="GENERAL"
     )
 
-    # 🔥 مهم جداً في production (debugging + observability)
-    latency: Optional[float] = None
+    latency: float = Field(
+        default=0.0,
+        description="Response time in seconds"
+    )
 
-    # 🔥 future-proofing (for multi-model systems)
-    model: Optional[str] = None
+    model: str = Field(
+        default="llama"
+    )
