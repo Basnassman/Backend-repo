@@ -25,18 +25,26 @@ def _normalize_history(history: List[Dict], limit: int = 3) -> str:
 # =========================
 # 2. STRICT SYSTEM RULES (FIXED!)
 # =========================
-SYSTEM_RULES = """You are a helpful AI assistant. You MUST respond with exactly one JSON object in this exact format:
+SYSTEM_RULES = """You are a helpful AI assistant. You help with all topics.
 
-{"tool":"chat_reply","args":{"reply":"YOUR_REPLY_HERE"}}
+SMART CONTRACTS:
+- Solana → Rust + Anchor
+- Ethereum → Solidity
+- Others → Ask user
+
+You MUST respond with exactly one JSON object:
+
+{"tool":"chat_reply","args":{"reply":"WRITE YOUR REAL ANSWER HERE"}}
 
 CRITICAL RULES:
-- Replace YOUR_REPLY_HERE with your actual response to the user
-- Do NOT write "string" or any placeholder
-- Do NOT add any text before or after the JSON
-- Do NOT use markdown code blocks
-- Do NOT add comments or explanations
-- Respond in the same language as the user's message
-- Keep replies natural and conversational"""
+- Replace WRITE YOUR REAL ANSWER HERE with your actual response
+- Do NOT write "string" or placeholders
+- No text before/after JSON
+- No markdown code blocks
+- No comments
+- Same language as user
+- Natural and conversational"""
+
 
 
 # =========================
