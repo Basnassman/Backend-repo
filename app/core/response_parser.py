@@ -33,6 +33,7 @@ def _extract_json_block(text: str) -> Optional[str]:
         except:
             pass
     
+    # Balanced braces للـ nested JSON
     start = text.find('{')
     if start == -1:
         return None
@@ -54,21 +55,34 @@ def _extract_json_block(text: str) -> Optional[str]:
 
 
 def _deep_extract_reply(text: str) -> Optional[str]:
+    """
+    يستخرج الرد من تنسيق tool_call
+    """
     if not text:
         return None
     
+    # Pattern: {"tool":"chat_reply","args":{"reply":"..."}}
+    # group واحد فقط = الـ reply
     pattern = r'\{\s*"tool"\s*:\s*"chat_reply"\s*,\s*"args"\s*:\s*\{\s*"reply"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}\s*\}'
     matches = re.findall(pattern, text, re.DOTALL)
     
-    for tool_name, reply in matches:
+    # ✅ matches هو list of strings (مش tuples)
+    for reply in matches:
         if reply:
-            cleaned = reply.encode('utf-8').decode('unicode_escape')
+            try:
+                cleaned = reply.encode('utf-8').decode('unicode_escape')
+            except:
+                cleaned = reply
             return _fix_encoding(cleaned).strip()
     
+    # fallback: بحث بسيط عن أي "reply"
     simple_pattern = r'"reply"\s*:\s*"((?:[^"\\]|\\.)*)"'
     matches = re.findall(simple_pattern, text, re.DOTALL)
     if matches:
-        cleaned = matches[-1].encode('utf-8').decode('unicode_escape')
+        try:
+            cleaned = matches[-1].encode('utf-8').decode('unicode_escape')
+        except:
+            cleaned = matches[-1]
         return _fix_encoding(cleaned).strip()
     
     return None
@@ -144,25 +158,30 @@ def parse_tool_response(raw) -> Optional[str]:
     if not raw:
         return None
 
-    # إصلاح encoding أولاً
+    # إصلاح encoding
     raw = _fix_encoding(raw)
 
+    # 1. البحث العميق (الأدق)
     deep_reply = _deep_extract_reply(raw)
     if deep_reply:
         return deep_reply
 
+    # 2. JSON parse مباشر
     data = _safe_json_load(raw)
     
+    # 3. استخراج JSON block
     if not data:
         json_block = _extract_json_block(raw)
         if json_block:
             data = _safe_json_load(json_block)
 
+    # 4. validate tool format
     if data:
         validated = _validate_tool(data)
         if validated:
             return validated
 
+    # 5. fallback: تنظيف النص
     cleaned = _clean_raw_text(raw)
     if cleaned and len(cleaned) > 2:
         return cleaned
