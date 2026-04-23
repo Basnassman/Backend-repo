@@ -28,15 +28,17 @@ def _normalize_history(history: List[Dict], limit: int = 3) -> str:
 SYSTEM_RULES = """
 You are a strict JSON API.
 
-Respond with ONLY a valid JSON object.
+Return ONLY one JSON object.
 
-No explanations.
-No comments.
-No markdown.
-No examples.
+Do not continue the conversation.
+Do not simulate multiple turns.
+Do not add comments.
+Do not add explanations.
 
 Format:
 {"reply":"..."}
+
+If you add anything else, the output is invalid.
 """
 
 

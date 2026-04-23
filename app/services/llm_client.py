@@ -16,10 +16,18 @@ def call_llm(prompt: str, n_predict: int = 100, retries: int = 2, api_url=None, 
         "n_predict": n_predict,
         "temperature": 0.2,
         "stop": [
-            "User:",
-            "Assistant:",
-            "```"
-        ]
+        "User:",
+        "Assistant:",
+        "\nUser",
+        "\nAssistant",
+        "//",
+        "#",
+        "```"
+    ]
+            
+            
+            
+        
     }
 
     headers = {
