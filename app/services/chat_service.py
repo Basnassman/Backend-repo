@@ -35,13 +35,16 @@ def handle_chat(req):
             return call_model(prompt, req.n_predict or 100)
 
         raw_reply = safe_call_llm(call)
+        print(f"[RAW REPLY TYPE]: {type(raw_reply)}")  # للـ debug
+        print(f"[RAW REPLY]: {raw_reply[:200] if isinstance(raw_reply, str) else raw_reply}...")
 
-        # 5. معالجة + استخراج + تنظيف داخل parser
+        # 5. معالجة الرد
         reply = parse_tool_response(raw_reply)
 
         # 6. fallback
         if not reply:
-            reply = "I couldn't generate a response."
+            print("[PARSER FALLBACK] Could not extract reply")
+            reply = "عذراً، لم أتمكن من فهم رسالتك. هل يمكنك إعادة صياغتها؟"
 
         # 7. حفظ الرد
         add_message(user_id, "assistant", reply)
@@ -62,7 +65,7 @@ def handle_chat(req):
         latency = round(time.time() - start_time, 4)
 
         return {
-            "reply": "Internal error occurred",
+            "reply": "حدث خطأ داخلي، يرجى المحاولة لاحقاً",
             "intent": "ERROR",
             "latency": latency
         }
