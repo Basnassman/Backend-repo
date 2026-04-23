@@ -1,4 +1,4 @@
-from app.core.response_parser import parse_llm_response
+from app.core.response_parser import parse_tool_response
 import time
 
 
@@ -9,7 +9,7 @@ def safe_call_llm(call_fn, max_retries=2):
         try:
             raw = call_fn()
 
-            reply = parse_llm_response(raw)
+            reply = parse_tool_response(raw)
 
             if reply:
                 return reply
