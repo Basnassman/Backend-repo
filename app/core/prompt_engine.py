@@ -2,9 +2,9 @@ from typing import List, Dict
 
 
 # =========================
-# 1. MEMORY NORMALIZER (cleaner)
+# 1. MEMORY NORMALIZER (SAFE)
 # =========================
-def _normalize_history(history: List[Dict], limit: int = 5) -> str:
+def _normalize_history(history: List[Dict], limit: int = 3) -> str:
     output = []
 
     for msg in history[-limit:]:
@@ -14,7 +14,6 @@ def _normalize_history(history: List[Dict], limit: int = 5) -> str:
         if not content:
             continue
 
-        # 🔥 تبسيط بدون رموز قد تربك النموذج
         if role == "user":
             output.append(f"User: {content}")
         elif role == "assistant":
@@ -24,65 +23,46 @@ def _normalize_history(history: List[Dict], limit: int = 5) -> str:
 
 
 # =========================
-# 2. STRICT SYSTEM RULES (SIMPLIFIED - IMPORTANT)
+# 2. STRICT SYSTEM RULES (CLEAN)
 # =========================
 SYSTEM_RULES = """
-You are a JSON API.
+You are a strict JSON API.
 
-You must respond with ONLY a valid JSON object.
+Respond with ONLY a valid JSON object.
 
-Do not explain.
-Do not add comments.
-Do not add markdown.
-Do not include examples.
-Do not include multiple outputs.
+No explanations.
+No comments.
+No markdown.
+No examples.
 
-The response must be exactly in this format:
+Format:
 {"reply":"..."}
-
-If you break the format, the response is invalid.
-
-User message:
-{message}
 """
 
 
 # =========================
-# 3. INTENT FILTER (simplified)
-# =========================
-def _detect_mode(message: str) -> str:
-    msg = message.lower()
-
-    if any(k in msg for k in ["code", "python", "dart", "flutter"]):
-        return "CODE"
-
-    if any(k in msg for k in ["what", "how", "why", "اشرح", "لماذا"]):
-        return "EXPLAIN"
-
-    if any(k in msg for k in ["hi", "hello", "السلام", "مرحبا"]):
-        return "CHAT"
-
-    return "GENERAL"
-
-
-# =========================
-# 4. MAIN PROMPT BUILDER (SIMPLIFIED + STRONGER)
+# 3. MAIN PROMPT BUILDER (FIXED)
 # =========================
 def build_prompt(message: str, history: List[Dict]) -> str:
+    # 🔥 مهم: نحد من تأثير history
     history_block = _normalize_history(history)
 
-    prompt = f"""
+    if history_block:
+        prompt = f"""
 {SYSTEM_RULES}
 
 Conversation:
-{history_block if history_block else "No history"}
+{history_block}
 
-User message:
+User:
 {message}
+""".strip()
+    else:
+        prompt = f"""
+{SYSTEM_RULES}
 
-IMPORTANT:
-Respond ONLY with JSON:
-{{"reply":"..."}}
+User:
+{message}
 """.strip()
 
     return prompt
